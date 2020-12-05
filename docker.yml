@@ -1,0 +1,41 @@
+- name: "Configuring HTTPD in Docker"
+  hosts: 192.168.0.102
+  tasks:
+   - name: Configuring Yum Repo for Docker
+     yum_repository:
+       name: Docker 
+       description: Yum Repo for Docker
+       baseurl: https:///download.docker.com/linux/centos/7/x86_64/stable/
+       gpgcheck: no
+
+   - name: "Installing Docker-CE"
+     shell: "yum install docker-ce --nobest -y"
+
+   - name: "Starting and Enabling Service of Docker"
+     service:
+       name: "docker"
+       state: started
+       enabled: yes
+
+   - name: "Installing Docker-Py Library"
+     pip:
+       name: "docker-py"
+
+   - name: "Copying the HTML files"
+     copy:
+       src: "/root/docker/index.html"
+       dest: "/root/index.html"
+
+   - name: "Launching Docker Contaiiner"
+     docker_container:
+       name: "webserver"
+       image: "httpd"
+       exposed_ports: "80"
+       ports: "1234:80"
+       volumes: "/root/index.html:/usr/local/apache2/htdocs/index.html"
+       state: started
+
+   - name: "Setting up Firewall"
+     firewalld:
+       port: "1234/tcp"
+       state: enabled
